@@ -1,0 +1,27 @@
+{
+  "name": "backed",
+  "version": "1.0.0",
+  "description": "this is backend code",
+  "homepage": "https://github.com/chondon-kumar/backend-2#readme",
+  "bugs": {
+    "url": "https://github.com/chondon-kumar/backend-2/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chondon-kumar/backend-2.git"
+  },
+  "license": "ISC",
+  "author": "chodon-kumar",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon index.js"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9",
+    "prettier": "^3.5.3"
+  },
+  "dependencies": {
+    "env": "^0.0.2"
+  }
+}
