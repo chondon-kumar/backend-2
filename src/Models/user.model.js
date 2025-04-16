@@ -36,7 +36,7 @@ const userSchema = new Schema({
     },
     refreshToken : {
         type : String,
-        required : true,
+        
     },
     watchHistory : [
         {
@@ -57,30 +57,31 @@ userSchema.pre("save", async function (next) {
 
 userSchema.methods.isPasswordCorrect = async function (password){
     return await bcrypt.compare(password,this.password);
-}
+};
 
-userSchema.methods.genarateAccecToken = function (){
-    jwt.sign(
+userSchema.methods.genarateAccessToken = function (){
+    return jwt.sign(
         {
             _id : this._id,
             userName : this.userName,
-            email : this,email,
+            email : this.email,
             fullName : this.fullName
         },
         process.env.ACCESS_TOKEN_SECRET,
         {
-            expiresIn : ACCESS_TOKEN_EXPIRE
+            expiresIn : process.env.ACCESS_TOKEN_EXPIRE
+        
         }
-    )
+    );
 };
 userSchema.methods.genarateRefreshToken = function (){
-    jwt.sign(
+    return jwt.sign(
         {
             _id : this._id, 
         },
         process.env.REFRESH_TOKEN_SECRET,
         {
-            expiresIn : REFRESH_TOKEN_EXPIRE
+            expiresIn :  process.env.REFRESH_TOKEN_EXPIRE
         }
     )
 }
