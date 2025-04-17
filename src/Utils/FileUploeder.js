@@ -3,6 +3,7 @@ import { response } from "express";
 import fs from "fs";
 import { ApiError } from "../Utils/ApiError.js";
 
+
 cloudinary.config({ 
     cloud_name: "dfpfgsiy4", 
     api_key: "658416213169248",
@@ -28,11 +29,13 @@ const uploedOnCloudinary = async (localFilePath) => {
         return null;
     }
 }
-const deleteOnCloudinary = async (oldAvaterUrl) => {
+const deleteOnCloudinary = async (oldFileUrl) => {
     try {
-        const avater = oldAvaterUrl.splite("/").pop().splite(".");
         
-       const response = await cloudinary.uploader.destroy(avater,{ resource_type: "auto" })
+        const exitsFile = oldFileUrl.split("/").pop().split(".")[0];
+        
+        const response = await cloudinary.uploader.destroy(exitsFile)
+    
         return response
     } catch (error) {
         throw new ApiError(400, "error when deleteing cloudinary files")

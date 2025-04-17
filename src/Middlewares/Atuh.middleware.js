@@ -6,10 +6,10 @@ import { User } from "../Models/user.model.js";
 
 export const verifyJwt = asyncHandler (async (req, _, next) =>{
     try {
-        const token =  req.cookies?.accessToken || req.header("uthorization")?.replace("Bearer ", "")
+        const token =  req.cookies?.accessToken || req.header("authorization")?.replace("Bearer ", "")
     
         if (!token) {
-            throw new ApiError( 400 , " this token doesnot exists")
+            throw new ApiError( 400 , " this token does not exists")
         }
     
         const deCodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)

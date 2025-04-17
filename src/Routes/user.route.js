@@ -1,6 +1,19 @@
 
 import { Router } from "express"
-import { changerAvater, logInUser, logOurUser, refreshAccessToken, registerUser,  } from "../Controllers/user.controller.js";
+import {
+    changePassword,
+    changerAvater, 
+    changerCoverImage, 
+    getCurrentUser,
+    getUserChannelProfile,
+    getWatchHistory,
+    logInUser, 
+    logOutUser, 
+    refreshAccessToken, 
+    registerUser,
+    updateAccountDetails, 
+    
+} from "../Controllers/user.controller.js";
 import {upload} from "..//Middlewares/multer.middleware.js"
 import { verifyJwt } from "../Middlewares/Atuh.middleware.js"
 
@@ -20,17 +33,24 @@ userRouter.route("/register").post(
 )
 
 userRouter.route("/login").post(logInUser);
-userRouter.route("/change-avater").post(
-    upload.fields([
-        {
-            name: "avater",
-            maxCount :1
-        }
-    ]),
-    changerAvater);
+
+userRouter.route("/change_avater").patch(verifyJwt, upload.single("avater"),changerAvater);
+
+userRouter.route("/change_cover_imege").patch( verifyJwt,upload.single("coverImage"),changerCoverImage
+);
+userRouter.route("/editUser").patch(verifyJwt, updateAccountDetails);
+userRouter.route("/user_deteils").get(verifyJwt, getCurrentUser);
+userRouter.route("/c/:userName").get(verifyJwt, getUserChannelProfile);
+userRouter.route("/watchHistory").get(verifyJwt, getWatchHistory);
+
+
+
 
 //secure route
-userRouter.route("/logout").post( verifyJwt, logOurUser);
-userRouter.route("/refresh-token").post( refreshAccessToken);
+userRouter.route("/logout").post( verifyJwt, logOutUser);
+userRouter.route("/refresh_token").get(verifyJwt, refreshAccessToken);
+userRouter.route("/password_change").patch(verifyJwt, changePassword)
+userRouter.route("/get_currentUser").get(verifyJwt, getCurrentUser)
+
 
 export {userRouter}

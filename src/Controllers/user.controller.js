@@ -190,13 +190,13 @@ const logInUser = asyncHandler (async (req, res) => {
     
 
 });
-const logOurUser = asyncHandler (async (req, res) => {
+const logOutUser = asyncHandler (async (req, res) => {
 
     await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set : {
-                refreshToken : undefined
+            $unset : {
+                refreshToken : 1
             }
         },{
             new : true
@@ -281,6 +281,8 @@ const changePassword = asyncHandler (async (req, res) => {
 });
 
 const getCurrentUser = asyncHandler (async (req, res) => {
+   console.log(req.user);
+   
     return res
     .status(200)
     .json(
@@ -316,24 +318,25 @@ const updateAccountDetails = asyncHandler (async (req, res) => {
 });
 
 const changerAvater = asyncHandler (async(req, res) => {
-    const avaterLocalPath = req.files?.avater[0]?.path
+    const avaterLocalPath = req.file?.path
 
     if (!avaterLocalPath) {
     throw new ApiError(200, "Averter file is missing")        
     }
-    // console.log(req.user)
-    // const user = await User.findById(req.user?._id)
-    // console.log("user",user)
-    // const oldAvater =  await user.avater
 
+    const oldAvater =  await req.user?.avater
+    if (!oldAvater) {
+        throw new ApiError(400, "old avater files not found")
+    }
     // console.log(oldAvater)
-    // await deleteOnCloudinary(oldAvater)
+    await deleteOnCloudinary(oldAvater)
     const avater = await uploedOnCloudinary(avaterLocalPath)
 
     if (!avater) {
     throw new ApiError(200, "Error while uploading avater")        
     }
 
+    //  console.log(avater)
     const user =  await User.findByIdAndUpdate(
         req.user?._id,
         {
@@ -344,7 +347,7 @@ const changerAvater = asyncHandler (async(req, res) => {
     ).select("-password -refreshToken")
     return res
     .status(200)
-    .json(new ApiResponse(200," Updata avater successfully ",user))
+    .json(new ApiResponse(200," Updata avater successfully ",{}))
 
 });
 const changerCoverImage = asyncHandler (async(req, res) => {
@@ -353,6 +356,15 @@ const changerCoverImage = asyncHandler (async(req, res) => {
     if (!coverImageLocalPath) {
         throw new ApiError(400,"Coverimage file is missing")
     }
+
+    const oldCoverImage = req.user?.coverImage
+
+    if(!oldCoverImage){
+        throw new ApiError(400, "Old cover image not found")
+    }
+    // to old cover image path from cloudinary
+    await deleteOnCloudinary(oldCoverImage);
+
     const coverImage = uploedOnCloudinary(coverImageLocalPath)
 
     if (!coverImage) {
@@ -373,16 +385,146 @@ const changerCoverImage = asyncHandler (async(req, res) => {
     .json(new ApiResponse(200," Cover image upload successfully",user))
 });
 
+const getUserChannelProfile = asyncHandler (async (req, res) =>{
+    const {userName} = req.params
+
+    console.log(req.params)
+
+    if (!userName?.trim()) {
+        throw new ApiError(400, "user name is missing")    
+    }
+
+    const channels = await User.aggregate([
+        {
+            $match :{
+                userName: userName?.toLowerCase()
+            }
+        },
+        {
+            $lookup:{
+                from : "subcriptions",
+                localField :"_id",
+                foreignField : "channelId",
+                as : "subcribers"
+            }
+        },
+        {
+            $lookup : {
+                from : "subcriptions",
+                localField : "_id",
+                foreignField : "subscriptionId",
+                as : "subcribeChannel"
+            }
+        },
+        {
+            $addFields :{
+                subscribersCount :{
+                    $size : "$subcribers"
+                },
+                subcribeChannelCount :{
+                    $size : "$subcribeChannel"
+                },
+                isSubcribe :{
+                    $cond : {
+                        if : {$in: [req.user?._id, "$subcribers.subscriptionId"]},
+                        then : "true",
+                        else : "false"
+                    }
+                }
+            }
+        },
+        {
+            $project : {
+                userName : 1,
+                fullName : 1,
+                email : 1,
+                subcribeChannelCount : 1,
+                subscribersCount : 1,
+                isSubcribe : 1,
+                avater : 1,
+                coverImage : 1    
+            }
+        }
+     ])
+
+     if (!channels?.length) {
+        throw new ApiError(400, "channel doesnot exists")
+     }
+
+     return res
+     .status(200)
+     .json(new ApiResponse(
+        200,
+        "user channel fetch successfully",
+        channels[0]
+     ))
+
+});
+
+const getWatchHistory = asyncHandler (async (req, res) => {
+
+    const user = await User.aggregate([
+        {
+            $match :{
+                _id : new mongoose.Types.ObjectId(req.user?._id)
+            }
+        },
+        {
+            $lookup : {
+                from : "videos",
+                localField : "watchHistory",
+                foreignField : "_id",
+                as : "watchHistory",
+                pipeline : [
+                    {
+                       $lookup : {
+                            from : "users",
+                            localField : "owner",
+                            foreignField :"_id",
+                            as : "owner",
+                            pipeline : [
+                                {
+                                    $project : {
+                                        fullName : 1,
+                                        avater : 1,
+                                        userName : 1
+                                    }
+                                }
+                            ]
+                       } 
+                    },,
+                    {
+                    // add this pipeline for send dada as a object
+                      $addFields : {
+                            owner : {
+                                $frist : "$owner" // frist approse
+                                // use arrayAt second approse
+                            }
+                      }  
+                    }
+                ]
+            }
+        }
+    ])
+
+    return res 
+    .status(200)
+    .json(new ApiResponse(200,"get watchHistory successfully",user[0].watchHisto))
+
+})
+
 
 export {
     registerUser,
     logInUser,
-    logOurUser,
+    logOutUser,
     refreshAccessToken,
     changePassword,
     getCurrentUser,
     updateAccountDetails,
     changerAvater,
     changerCoverImage,
+    getUserChannelProfile,
+    getWatchHistory
 
 };
