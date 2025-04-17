@@ -31,11 +31,8 @@ userRouter.route("/register").post(
     ]),
     registerUser
 )
-
 userRouter.route("/login").post(logInUser);
-
 userRouter.route("/change_avater").patch(verifyJwt, upload.single("avater"),changerAvater);
-
 userRouter.route("/change_cover_imege").patch( verifyJwt,upload.single("coverImage"),changerCoverImage
 );
 userRouter.route("/editUser").patch(verifyJwt, updateAccountDetails);
